@@ -1,5 +1,6 @@
-from flask import Blueprint, request, jsonify
-from models import db, Teacher
+from flask import Blueprint, jsonify, request
+from models import Teacher
+from extensions import db
 
 bp = Blueprint('teacher', __name__, url_prefix='/teachers')
 
@@ -15,8 +16,12 @@ def get_teachers():
 
 @bp.route('/', methods=['POST'])
 def add_teacher():
-    data = request.json
-    teacher = Teacher(**data)
-    db.session.add(teacher)
+    data = request.get_json()
+    new_teacher = Teacher(
+        Name=data['Name'],
+        Subject=data['Subject'],
+        Contact=data['Contact']
+    )
+    db.session.add(new_teacher)
     db.session.commit()
-    return jsonify({'message': 'Teacher added successfully'}), 201
+    return jsonify({'message': 'Teacher added successfully'})

@@ -1,25 +1,33 @@
 from flask import Flask
-from config import SQLALCHEMY_DATABASE_URI
 from extensions import db
+from config import SQLALCHEMY_DATABASE_URI
+from flask_cors import CORS
+
+app = Flask(__name__)
+CORS(app)
 
 def create_app():
     app = Flask(__name__)
-    app.config.from_object('config')
+    app.config['SQLALCHEMY_DATABASE_URI'] = SQLALCHEMY_DATABASE_URI
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     db.init_app(app)
 
     with app.app_context():
-        # Import models to register them with SQLAlchemy
-        from models import Student, Teacher, Course  # Add others as needed
+        from models import Student, Teacher, Course
+        db.create_all()
 
-        # Import blueprints
-        from routes import student, teacher, course
-        app.register_blueprint(student.bp)
-        app.register_blueprint(teacher.bp)
-        app.register_blueprint(course.bp)
+        from routes.student import bp as student_bp
+        from routes.teacher import bp as teacher_bp
+        from routes.course import bp as course_bp
 
-        # Optional: only if you're creating tables (be careful with existing db)
-        # db.create_all()
+        app.register_blueprint(student_bp)
+        app.register_blueprint(teacher_bp)
+        app.register_blueprint(course_bp)
+
+        @app.route('/')
+        def home():
+            return "✅ School Management API is running!"
 
     return app
 
