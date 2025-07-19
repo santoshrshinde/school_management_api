@@ -4,7 +4,7 @@ from extensions import db
 
 bp = Blueprint('teacher', __name__, url_prefix='/teachers')
 
-@bp.route('/', methods=['GET'])
+@bp.route('/', methods=['OPTIONS','GET'])
 def get_teachers():
     teachers = Teacher.query.all()
     return jsonify([{

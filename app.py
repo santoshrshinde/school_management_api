@@ -3,13 +3,14 @@ from extensions import db
 from config import SQLALCHEMY_DATABASE_URI
 from flask_cors import CORS
 
-app = Flask(__name__)
-CORS(app)
-
 def create_app():
     app = Flask(__name__)
+    app.url_map.strict_slashes = False
     app.config['SQLALCHEMY_DATABASE_URI'] = SQLALCHEMY_DATABASE_URI
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+    # 🔥 Wide-open CORS for debugging — DON'T use in production
+    CORS(app, resources={r"/*": {"origins": "http://localhost:4200"}}, supports_credentials=True)
 
     db.init_app(app)
 

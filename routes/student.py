@@ -4,7 +4,7 @@ from extensions import db
 
 bp = Blueprint('student', __name__, url_prefix='/students')
 
-@bp.route('/', methods=['GET'])
+@bp.route('/', methods=['OPTIONS','GET'])
 def get_students():
     students = Student.query.all()
     return jsonify([
@@ -16,14 +16,24 @@ def get_students():
         } for s in students
     ])
 
-@bp.route('/', methods=['POST'])
+@bp.route('/', methods=['OPTIONS','GET', 'POST'])
 def add_student():
-    data = request.get_json()
-    new_student = Student(
-        Name=data['Name'],
-        DateOfBirth=data['DateOfBirth'],
-        Address=data['Address']
-    )
-    db.session.add(new_student)
+    print('aading student')
+    # data = request.get_json()
+    # print('data')
+    # print(data)
+    # new_student = Student(
+    #     Name=data['Name'],
+    #     DateOfBirth=data['DateOfBirth'],
+    #     Address=data['Address']
+    # )
+    # print(new_student)
+    # db.session.add(new_student)
+    # db.session.commit()
+    # return jsonify({'message': 'Student added successfully'})
+
+    data = request.json
+    student = Student(**data)
+    db.session.add(student)
     db.session.commit()
-    return jsonify({'message': 'Student added successfully'})
+    return jsonify({'message': 'Student added successfully'}), 201
