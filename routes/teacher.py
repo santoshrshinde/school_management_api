@@ -14,7 +14,7 @@ def get_teachers():
         'Contact': t.Contact
     } for t in teachers])
 
-@bp.route('/', methods=['POST'])
+@bp.route('/', methods=['OPTIONS', 'POST'])
 def add_teacher():
     data = request.get_json()
     new_teacher = Teacher(

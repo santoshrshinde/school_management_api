@@ -10,7 +10,7 @@ def create_app():
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     # 🔥 Wide-open CORS for debugging — DON'T use in production
-    CORS(app, resources={r"/*": {"origins": "http://localhost:4200"}}, supports_credentials=True)
+    CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
 
     db.init_app(app)
 

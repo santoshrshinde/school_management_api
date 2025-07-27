@@ -37,3 +37,30 @@ def add_student():
     db.session.add(student)
     db.session.commit()
     return jsonify({'message': 'Student added successfully'}), 201
+
+@bp.route('/<int:student_id>', methods=['OPTIONS','GET'])
+def get_student(student_id):
+    student = Student.query.get_or_404(student_id)
+    return jsonify({
+        'StudentID': student.StudentID,
+        'Name': student.Name,
+        'DateOfBirth': student.DateOfBirth.isoformat(),
+        'Address': student.Address
+    })
+
+@bp.route('/<int:student_id>', methods=['OPTIONS','PUT'])
+def update_student(student_id):
+    student = Student.query.get_or_404(student_id)
+    data = request.get_json()
+    student.Name = data['Name']
+    student.DateOfBirth = data['DateOfBirth']
+    student.Address = data['Address']
+    db.session.commit()
+    return jsonify({'message': 'Student updated successfully'})
+
+@bp.route('/<int:student_id>', methods=['OPTIONS','DELETE'])
+def delete_student(student_id):
+    student = Student.query.get_or_404(student_id)
+    db.session.delete(student)
+    db.session.commit()
+    return jsonify({'message': 'Student deleted successfully'})
