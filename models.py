@@ -2,10 +2,10 @@ from extensions import db
 
 class Student(db.Model):
     __tablename__ = 'Stds'
-    StudentID = db.Column(db.Integer, primary_key=True)
-    Name = db.Column(db.String(100), unique=True)
-    DateOfBirth = db.Column(db.Date)
-    Address = db.Column(db.Text)
+    StudentID = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    Name = db.Column(db.String(100), unique=True, nullable=False)
+    DateOfBirth = db.Column(db.Date, nullable=False)
+    Address = db.Column(db.Text, nullable=True)
 
 class Teacher(db.Model):
     __tablename__ = 'Teacher'
