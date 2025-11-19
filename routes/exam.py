@@ -29,7 +29,6 @@ def add_exam():
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
 
-
 # ------------------ Get all exams -------------------
 @bp.route('/all', methods=['GET'])
 def get_exams():
@@ -52,6 +51,29 @@ def get_exams():
     ]
     return jsonify(result)
 
+# ------------------ Get exams by course -------------------
+@bp.route('/by-course/<int:course_id>', methods=['GET'])
+def get_exams_by_course(course_id):
+    # 🔹 Added: Course-wise filter
+    exams = db.session.query(
+        Exam.ExamID,
+        Course.CourseName.label("CourseName"),
+        Exam.Subject,
+        Exam.ExamDate,
+        Exam.TotalMarks
+    ).join(Course, Exam.CourseID == Course.CourseID)\
+     .filter(Course.CourseID == course_id).all()
+
+    result = [
+        {
+            "ExamID": e.ExamID,
+            "CourseName": e.CourseName,
+            "Subject": e.Subject,
+            "ExamDate": e.ExamDate.strftime('%Y-%m-%d'),
+            "TotalMarks": e.TotalMarks
+        } for e in exams
+    ]
+    return jsonify(result)
 
 # ------------------ Get single exam -------------------
 @bp.route('/<int:id>', methods=['GET'])
@@ -76,7 +98,6 @@ def get_exam(id):
         })
     return jsonify({"error": "Exam not found"}), 404
 
-
 # ------------------ Update exam -------------------
 @bp.route('/update/<int:id>', methods=['PUT'])
 def update_exam(id):
@@ -94,7 +115,6 @@ def update_exam(id):
     db.session.commit()
     return jsonify({"message": "Exam updated successfully!"})
 
-
 # ------------------ Delete exam -------------------
 @bp.route('/delete/<int:id>', methods=['DELETE'])
 def delete_exam(id):
@@ -105,7 +125,6 @@ def delete_exam(id):
     db.session.delete(exam)
     db.session.commit()
     return jsonify({"message": "Exam deleted successfully!"})
-
 
 # ------------------ Get courses for dropdown -------------------
 @bp.route('/courses', methods=['GET'])
