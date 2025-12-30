@@ -198,7 +198,17 @@ INSERT INTO Stds (Name, DateOfBirth, Address)
 VALUES 
 ('Atharv', '2005-08-15', 'Pune'),
 ('Prasad', '2004-12-01', 'Nashik');
+ select * from Course;
+ select * from Stds;
+ 
+ALTER TABLE Attendance
+ADD COLUMN CourseID INT;
 
+ALTER TABLE Attendance
+ADD CONSTRAINT fk_att_course
+FOREIGN KEY (CourseID) REFERENCES Course(CourseID);
 
+SHOW TABLES;
 
-SELECT * FROM Students;
+select * from Attendance;
+

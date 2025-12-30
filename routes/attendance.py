@@ -1,85 +1,112 @@
 from flask import Blueprint, request, jsonify
 from extensions import db
-from models import Attendance, Student
-from dateutil.parser import parse  # ✅ handles ISO date strings
+from models import Attendance, Student, Course, Admission
+from datetime import date
 
 bp = Blueprint('attendance', __name__, url_prefix='/attendance')
 
 
-# Get all attendance records with student names
-@bp.route('/', methods=['GET'])
-def get_all_attendance():
-    records = db.session.query(
-        Attendance.AttendanceID,
-        Student.Name.label("StudentName"),
-        Attendance.Date,
-        Attendance.Status
-    ).join(Student, Attendance.StudentID == Student.StudentID).all()
-
-    result = [
-        {
-            "AttendanceID": r.AttendanceID,
-            "StudentName": r.StudentName,
-            "Date": r.Date.strftime('%Y-%m-%d') if r.Date else None,
-            "Status": r.Status
-        } for r in records
-    ]
-    return jsonify(result)
-
-
-# Get single attendance record by ID
-@bp.route('/<int:id>', methods=['GET'])
-def get_attendance(id):
-    record = Attendance.query.get_or_404(id)
-    student = Student.query.get(record.StudentID)
-    return jsonify({
-        "AttendanceID": record.AttendanceID,
-        "StudentID": record.StudentID,
-        "StudentName": student.Name if student else None,
-        "Date": record.Date.strftime('%Y-%m-%d') if record.Date else None,
-        "Status": record.Status
-    })
-
-
-# Create new attendance record
-@bp.route('/', methods=['POST'])
-def create_attendance():
-    data = request.json
+# ============================
+# ✔ GET ATTENDANCE BY COURSE + MONTH + YEAR
+# ============================
+@bp.route('/by-course/<int:course_id>/<int:month>/<int:year>', methods=['GET'])
+def get_attendance_by_course(course_id, month, year):
     try:
-        # Convert ISO datetime or YYYY-MM-DD string to date
-        date_obj = parse(data['Date']).date() if data.get('Date') else None
+        # Load students in selected course
+        students = db.session.query(
+            Student.StudentID,
+            Student.Name
+        ).join(
+            Admission, Admission.StudentID == Student.StudentID
+        ).filter(
+            Admission.CourseID == course_id
+        ).all()
 
-        new_attendance = Attendance(
-            StudentID=data['StudentID'],
-            Date=date_obj,
-            Status=data.get('Status', 'Present')
-        )
-        db.session.add(new_attendance)
-        db.session.commit()
-        return jsonify({'message': 'Attendance added successfully!'}), 201
+        # Load DB attendance for selected month
+        attendance_records = Attendance.query.filter(
+            Attendance.CourseID == course_id,
+            db.extract('month', Attendance.Date) == month,
+            db.extract('year', Attendance.Date) == year
+        ).all()
+
+        attendance_map = {}
+
+        # Convert DB → dictionary per student
+        for record in attendance_records:
+            sid = record.StudentID
+            day = record.Date.day
+
+            if sid not in attendance_map:
+                attendance_map[sid] = {}
+
+            attendance_map[sid][str(day)] = record.Status
+
+        result = []
+
+        # Build proper response format
+        for s in students:
+            sid = s.StudentID
+
+            # Default empty attendance dict
+            daily_attendance = {}
+
+            # Fill from DB
+            if sid in attendance_map:
+                daily_attendance = attendance_map[sid]
+
+            missed_days = list(daily_attendance.values()).count("A")
+
+            result.append({
+                "StudentID": sid,
+                "StudentName": s.Name,
+                "attendance": daily_attendance,
+                "missed": missed_days
+            })
+
+        return jsonify(result)
+
     except Exception as e:
-        return jsonify({'error': str(e)}), 400
+        return jsonify({"error": str(e)}), 400
 
 
-# Update attendance record
-@bp.route('/<int:id>', methods=['PUT'])
-def update_attendance(id):
-    record = Attendance.query.get_or_404(id)
-    data = request.json
 
-    record.StudentID = data.get('StudentID', record.StudentID)
-    if data.get('Date'):
-        record.Date = parse(data['Date']).date()
-    record.Status = data.get('Status', record.Status)
+# ============================
+# ✔ SAVE INDIVIDUAL ATTENDANCE
+# ============================
+@bp.route('/', methods=['POST'])
+def save_attendance():
+    try:
+        data = request.json
 
-    db.session.commit()
-    return jsonify({'message': 'Attendance updated successfully!'})
+        student_id = data["StudentID"]
+        course_id = data["CourseID"]
+        day = data["Day"]
+        month = data["Month"]
+        year = data["Year"]
+        status = data["Status"]
 
+        final_date = date(year, month, day)
 
-# Delete attendance record
-@bp.route('/<int:id>', methods=['DELETE'])
-def delete_attendance(id):
-    record = Attendance.query.get_or_404(id)
-    db.session.delete(record)
-    db.session.commit()
-    return jsonify({'message': 'Attendance deleted successfully!'})
+        record = Attendance.query.filter_by(
+            StudentID=student_id,
+            CourseID=course_id,
+            Date=final_date
+        ).first()
+
+        if record:
+            record.Status = status
+        else:
+            new_record = Attendance(
+                StudentID=student_id,
+                CourseID=course_id,
+                Date=final_date,
+                Status=status
+            )
+            db.session.add(new_record)
+
+        db.session.commit()
+
+        return jsonify({"message": "Attendance saved successfully!"})
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400

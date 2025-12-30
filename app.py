@@ -15,10 +15,14 @@ def create_app():
     db.init_app(app)
 
     with app.app_context():
+
+        # Import models
         from models import (
-            Student, Teacher, Course, SchoolBus, Library, Admission, Attendance,
-            Fees, StudentBus, BookIssue, Timetable, Exam, Result
+            Student, Teacher, Course, SchoolBus, Library, Admission,
+            Attendance, Fees, StudentBus, BookIssue,
+            Timetable, Exam, Result
         )
+
         db.create_all()
 
         # Import blueprints
@@ -35,6 +39,7 @@ def create_app():
         from routes.timetable import bp as timetable_bp
         from routes.exam import bp as exam_bp
         from routes.result import bp as result_bp
+        from routes.dashboard import dashboard_bp   # ✅ DASHBOARD
 
         # Register blueprints
         app.register_blueprint(student_bp)
@@ -50,10 +55,11 @@ def create_app():
         app.register_blueprint(timetable_bp)
         app.register_blueprint(exam_bp)
         app.register_blueprint(result_bp)
+        app.register_blueprint(dashboard_bp)        # ✅ DASHBOARD
 
         @app.route('/')
         def home():
-            return "✅ 🎇🎊🎉✨ School Management API is running!"
+            return "✅ 🎇🎉 School Management API is running!"
 
     return app
 

@@ -45,14 +45,22 @@ class Admission(db.Model):
     student = db.relationship("Student", backref="admissions")
     course = db.relationship("Course", backref="admissions")
 
+from extensions import db
+
 class Attendance(db.Model):
     __tablename__ = 'Attendance'
     AttendanceID = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    StudentID = db.Column(db.Integer, db.ForeignKey('Stds.StudentID'), nullable=False)
-    Date = db.Column(db.Date, nullable=False)
-    Status = db.Column(db.String(10), nullable=False)
+    StudentID = db.Column(db.Integer, db.ForeignKey('Stds.StudentID'))
+    Date = db.Column(db.Date)
+    Status = db.Column(db.String(10))
+    
+    # ✅ New CourseID column
+    CourseID = db.Column(db.Integer, db.ForeignKey('Course.CourseID'))
+    
+    # Optional: relationship
+    student = db.relationship('Student', backref='attendances')
+    course = db.relationship('Course', backref='attendances')
 
-    student = db.relationship("Student", backref="attendance_records")
 
 class Fees(db.Model):
     __tablename__ = 'Fees'
