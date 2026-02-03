@@ -1,58 +1,32 @@
 from flask import Blueprint, jsonify
 from extensions import db
-from datetime import date
 from sqlalchemy import text
 
 dashboard_bp = Blueprint('dashboard', __name__, url_prefix='/dashboard')
 
-@dashboard_bp.route('/summary', methods=['GET'])
-def dashboard_summary():
-    try:
-        total_students = db.session.execute(
-            text("SELECT COUNT(*) FROM students")
-        ).scalar()
 
-        total_teachers = db.session.execute(
-            text("SELECT COUNT(*) FROM teacher")
-        ).scalar()
+@dashboard_bp.route('/count', methods=['GET'])
+def dashboard_count():
 
-        total_courses = db.session.execute(
-            text("SELECT COUNT(*) FROM course")
-        ).scalar()
+    total_students = db.session.execute(
+        text("SELECT COUNT(*) FROM Stds")
+    ).scalar()
 
-        # ✅ Pending Fees Calculation
-        pending_fees = db.session.execute(
-            text("SELECT IFNULL(SUM(total_fees - paid_amount), 0) FROM fees")
-        ).scalar()
+    total_teachers = db.session.execute(
+        text("SELECT COUNT(*) FROM Teacher")
+    ).scalar()
 
-        today = date.today()
+    total_courses = db.session.execute(
+        text("SELECT COUNT(*) FROM Course")
+    ).scalar()
 
-        total_attendance = db.session.execute(
-            text("SELECT COUNT(*) FROM attendance WHERE date = :d"),
-            {"d": today}
-        ).scalar()
+    total_admissions = db.session.execute(
+        text("SELECT COUNT(*) FROM Admission")
+    ).scalar()
 
-        present_attendance = db.session.execute(
-            text(
-                "SELECT COUNT(*) FROM attendance "
-                "WHERE date = :d AND status = 'Present'"
-            ),
-            {"d": today}
-        ).scalar()
-
-        attendance_percent = 0
-        if total_attendance > 0:
-            attendance_percent = round(
-                (present_attendance / total_attendance) * 100, 2
-            )
-
-        return jsonify({
-            "totalStudents": total_students,
-            "totalTeachers": total_teachers,
-            "totalCourses": total_courses,
-            "pendingFees": pending_fees,
-            "attendancePercent": attendance_percent
-        })
-
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    return jsonify({
+        "totalStudents": int(total_students),
+        "totalTeachers": int(total_teachers),
+        "totalCourses": int(total_courses),
+        "totalAdmissions": int(total_admissions)
+    })
